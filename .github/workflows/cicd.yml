@@ -39,7 +39,6 @@ jobs:
       - name: Run Docker Container
         run: |
           docker run -d -p 4000:4000\
-           --name nodejs-app-container \
             --name nodejs-app-container \
            -e MONGO_URI=${{ secrets.MONGO_URI }} \
            -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
