@@ -27,6 +27,10 @@ jobs:
       - name: Pull image from docker hub
         run: docker pull hs14/healthflow-nodejs:latest
 
+      - name: Create Network if not Exists
+        run: |
+          docker network inspect app_network >/dev/null 2>&1 || docker network create app_network
+
       - name: Stop and Remove Existing Container
         run: |
           docker stop nodejs-app-container || true
@@ -36,13 +40,14 @@ jobs:
         run: |
           docker run -d -p 4000:4000\
            --name nodejs-app-container \
-           -e MONGO_URI=`${{secrets.MONGO_URI}}` \
-           -e FRONTEND_URL=`${{secrets.FRONTEND_URL}}` \
-           -e DASHBOARD_URL=`${{secrets.DASHBOARD_URL}}` \
-           -e JWT_SECRET_KEY=`${{secrets.JWT_SECRET_KEY}}` \
-           -e JWT_EXPRESS=`${{secrets.JWT_EXPIRES}}` \
-           -e COOKIES_EXPIRES=`${{secrets.COOKIE_EXPIRE}}` \
-           -e CLOUDINARY_CLOUD_NAME=`${{secrets.CLOUDINARY_CLOUD_NAME}}` \
-           -e CLOUDINARY_API_SECRET=`${{secrets.CLOUDINARY_API_SECRET}}` \
-           -e CLOUDINARY_API_KEY=`${{secrets.CLOUDINARY_API_KEY}}` \
-          hs14/healthflow-nodejs
+            --name nodejs-app-container \
+           -e MONGO_URI=${{ secrets.MONGO_URI }} \
+           -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
+           -e DASHBOARD_URL=${{ secrets.DASHBOARD_URL }} \
+           -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+           -e JWT_EXPRESS=${{ secrets.JWT_EXPIRES }} \
+           -e COOKIES_EXPIRES=${{ secrets.COOKIE_EXPIRE }} \
+           -e CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }} \
+           -e CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }} \
+           -e CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }} \
+           hs14/healthflow-nodejs
