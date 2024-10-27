@@ -17,6 +17,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{secrets.SSH_KEY}}" > ~/.ssh/deploy_key.pem
           chmod 600 ~/.ssh/deploy_key.pem
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
         shell: bash
 
       - name: Deploying to server
