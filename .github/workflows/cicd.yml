@@ -14,7 +14,7 @@ jobs:
 
       - name: Set up SSH Key
         run: |
-          echo "${{secrets.SSH_KEY}}" > `/.ssh/deploy_kep.pem
+          echo "${{secrets.SSH_KEY}}" > /.ssh/deploy_kep.pem
           chmod 600 ~/.ssh/deploy_key.pem
         shell: bash
 
@@ -22,6 +22,8 @@ jobs:
         env:
           NODE_ENV: production
         run: |
+          echo "${{secrets.SSH_USER}}"
+
           ssh -i ~/.ssh/deploy_kep.pem `${{secrets.SSH_USER}}@${{secrets.SERVER_DNS}}` << 'EOF'
             cd /home/ubuntu
             git pull origin main
