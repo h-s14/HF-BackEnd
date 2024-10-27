@@ -12,41 +12,28 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build Docker Image
-        run: docker build --no-cache -t hs14/healthflow-nodejs .
-
-      - name: Publish Image to Docker Hub
-        run: docker push hs14/healthflow-nodejs:latest
-  deploy:
-    needs: build
-    runs-on: self-hosted
-    steps:
-      - name: Pull image from docker hub
-        run: docker pull hs14/healthflow-nodejs:latest
-
-      - name: Create Network if not Exists
+      - name: Set up SSH Key
         run: |
-          docker network inspect app_network >/dev/null 2>&1 || docker network create app_network
+          echo "${{secrets.SSH_KEY}}" > `/.ssh/deploy_kep.pem
+          chmod 600 ~/.ssh/deploy_key.pem
+        shell: bash
 
-      - name: Stop and Remove Existing Container
+      - name: Deploying to server
+        env:
+          NODE_ENV: production
         run: |
-          docker stop nodejs-app-container || true
-          docker rm nodejs-app-container || true
-
-      - name: Run Docker Container
-        run: |
-          docker run -d -p 4000:4000\
-            --name nodejs-app-container \
-           -e MONGO_URI=`${{secrets.MONGO_URI}}` \
-           -e FRONTEND_URL=`${{secrets.FRONTEND_URL}}` \
-           -e DASHBOARD_URL=`${{secrets.DASHBOARD_URL}}` \
-           -e JWT_SECRET_KEY=`${{secrets.JWT_SECRET_KEY}}` \
-           -e JWT_EXPRESS=`${{secrets.JWT_EXPIRES}}` \
-           -e COOKIES_EXPIRES=`${{secrets.COOKIE_EXPIRE}}` \
-           -e CLOUDINARY_CLOUD_NAME=`${{secrets.CLOUDINARY_CLOUD_NAME}}` \
-           -e CLOUDINARY_API_SECRET=`${{secrets.CLOUDINARY_API_SECRET}}` \
-           -e CLOUDINARY_API_KEY=`${{secrets.CLOUDINARY_API_KEY}}` \
-          hs14/healthflow-nodejs
+          ssh -i ~/.ssh/deploy_kep.pem ${{secrets.SSH_USER}}@${{secrets.SERVER_DNS}}<<'EOF'
+            cd /home/ubuntu
+            git pull origin main
+            npm install --production
+            pm2 restart all || pm2 start server.js --name "health-flow-backend" \
+            -e MONGO_URI=`${{secrets.MONGO_URI}}` \
+            -e FRONTEND_URL=`${{secrets.FRONTEND_URL}}` \
+            -e DASHBOARD_URL=`${{secrets.DASHBOARD_URL}}` \
+            -e JWT_SECRET_KEY=`${{secrets.JWT_SECRET_KEY}}` \
+            -e JWT_EXPRESS=`${{secrets.JWT_EXPIRES}}` \
+            -e COOKIES_EXPIRES=`${{secrets.COOKIE_EXPIRE}}` \
+            -e CLOUDINARY_CLOUD_NAME=`${{secrets.CLOUDINARY_CLOUD_NAME}}` \
+            -e CLOUDINARY_API_SECRET=`${{secrets.CLOUDINARY_API_SECRET}}` \
+            -e CLOUDINARY_API_KEY=`${{secrets.CLOUDINARY_API_KEY}}` \
+            EOF
