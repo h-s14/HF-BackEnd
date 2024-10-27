@@ -7,35 +7,28 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
 
-      - name: Set up SSH Key
+      - name: Install Dependencies
         run: |
-          mkdir -p ~/.ssh
-          echo "${{secrets.SSH_KEY}}" > ~/.ssh/deploy_key.pem
-          chmod 600 ~/.ssh/deploy_key.pem
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
-        shell: bash
+          cd /home/ubuntu/actions-runner-backend
+          git pull origin main
+          npm install --production
 
-      - name: Deploying to server
+      - name: Start or Restart the app
         env:
           NODE_ENV: production
         run: |
-          ssh -i ~/.ssh/deploy_key.pem ${{secrets.SSH_USER}}@${{secrets.SERVER_DNS}} << 'EOF'
-            cd /home/ubuntu
-            git pull origin main
-            npm install --production
-            pm2 restart all || pm2 start server.js --name "health-flow-backend" \
-            -e MONGO_URI=`${{secrets.MONGO_URI}}` \
-            -e FRONTEND_URL=`${{secrets.FRONTEND_URL}}` \
-            -e DASHBOARD_URL=`${{secrets.DASHBOARD_URL}}` \
-            -e JWT_SECRET_KEY=`${{secrets.JWT_SECRET_KEY}}` \
-            -e JWT_EXPRESS=`${{secrets.JWT_EXPIRES}}` \
-            -e COOKIES_EXPIRES=`${{secrets.COOKIE_EXPIRE}}` \
-            -e CLOUDINARY_CLOUD_NAME=`${{secrets.CLOUDINARY_CLOUD_NAME}}` \
-            -e CLOUDINARY_API_SECRET=`${{secrets.CLOUDINARY_API_SECRET}}` \
-            -e CLOUDINARY_API_KEY=`${{secrets.CLOUDINARY_API_KEY}}` \
-          EOF
+          pm2 restart all || pm2 start server.js --name "health-flow-backend" \
+          -e MONGO_URI=`${{secrets.MONGO_URI}}` \
+          -e FRONTEND_URL=`${{secrets.FRONTEND_URL}}` \
+          -e DASHBOARD_URL=`${{secrets.DASHBOARD_URL}}` \
+          -e JWT_SECRET_KEY=`${{secrets.JWT_SECRET_KEY}}` \
+          -e JWT_EXPRESS=`${{secrets.JWT_EXPIRES}}` \
+          -e COOKIES_EXPIRES=`${{secrets.COOKIE_EXPIRE}}` \
+          -e CLOUDINARY_CLOUD_NAME=`${{secrets.CLOUDINARY_CLOUD_NAME}}` \
+          -e CLOUDINARY_API_SECRET=`${{secrets.CLOUDINARY_API_SECRET}}` \
+          -e CLOUDINARY_API_KEY=`${{secrets.CLOUDINARY_API_KEY}}` \
